@@ -1,0 +1,199 @@
+[
+    {
+        "id": "flow1",
+        "type": "tab",
+        "label": "Soil Moisture Monitor",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "ui_tab1",
+        "type": "ui_tab",
+        "name": "Soil Monitor",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ui_group1",
+        "type": "ui_group",
+        "name": "Soil Moisture Dashboard",
+        "tab": "ui_tab1",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "inject1",
+        "type": "inject",
+        "z": "flow1",
+        "name": "Poll every 3s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 160,
+        "wires": [
+            [
+                "http1"
+            ]
+        ]
+    },
+    {
+        "id": "http1",
+        "type": "http request",
+        "z": "flow1",
+        "name": "Get from Firebase",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://soil-moisture-monitoring-d241c-default-rtdb.asia-southeast1.firebasedatabase.app/soil/moisture.json",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "parse1"
+            ]
+        ]
+    },
+    {
+        "id": "parse1",
+        "type": "function",
+        "z": "flow1",
+        "name": "Parse moisture",
+        "func": "var moisture = parseInt(msg.payload);\n\nif (isNaN(moisture)) {\n    node.warn('Bad response: ' + msg.payload);\n    return null;\n}\n\nmoisture = Math.max(0, Math.min(100, moisture));\n\nvar status = '';\nif (moisture < 20) {\n    status = '⚠ DRY — Water needed!';\n} else if (moisture < 50) {\n    status = '✓ LOW — Monitor closely';\n} else if (moisture < 75) {\n    status = '✓ GOOD — Soil is healthy';\n} else {\n    status = '✓ WET — Well watered';\n}\n\nreturn [\n    { payload: moisture },\n    { payload: status }\n];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 160,
+        "wires": [
+            [
+                "gauge1",
+                "chart1"
+            ],
+            [
+                "text1"
+            ]
+        ]
+    },
+    {
+        "id": "gauge1",
+        "type": "ui_gauge",
+        "z": "flow1",
+        "name": "Moisture Gauge",
+        "group": "ui_group1",
+        "order": 1,
+        "width": "6",
+        "height": "4",
+        "gtype": "gage",
+        "title": "Soil Moisture",
+        "label": "%",
+        "format": "{{value}}%",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#d32f2f",
+            "#ff9800",
+            "#4caf50"
+        ],
+        "seg1": "20",
+        "seg2": "50",
+        "x": 760,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "chart1",
+        "type": "ui_chart",
+        "z": "flow1",
+        "name": "Moisture Chart",
+        "group": "ui_group1",
+        "order": 2,
+        "width": "12",
+        "height": "4",
+        "label": "Moisture % Over Time",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Waiting for data...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "5",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1976d2",
+            "#aec6cf",
+            "#ff7f0e",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "x": 760,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "text1",
+        "type": "ui_text",
+        "z": "flow1",
+        "group": "ui_group1",
+        "order": 3,
+        "width": "6",
+        "height": "2",
+        "name": "Status",
+        "label": "Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 760,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "debug1",
+        "type": "debug",
+        "z": "flow1",
+        "name": "Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 280,
+        "wires": []
+    }
+]
